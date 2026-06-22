@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#16181d">
+<title>房屋物件連結擷取工具</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#16181d;--card:#1f2229;--card2:#262a33;--bd:#33363f;--bd2:#454a56;
+  --t1:#eceef1;--t2:#9aa0ad;--t3:#6b7180;
+  --blue:#4a9eea;--blue-bg:#1c3a5c;--blue-bd:#3a6fa8;--blue-dk:#8ec3f5;
+  --red:#f06868;--red-dk:#ff8989;--red-bg:#3d1f23;--red-bd:#6b3236;
+  --green:#3ecf8e;--green-bg:#163d2c;
+  --amber:#f0b94f;
+  --r:11px;--rs:7px;
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;padding-bottom:50px}
+
+.topbar{background:var(--card);border-bottom:0.5px solid var(--bd);padding:0 16px;display:flex;align-items:center;gap:10px;height:54px;position:sticky;top:0;z-index:20}
+.topbar-ico{width:32px;height:32px;background:var(--blue-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.topbar-ico svg{width:18px;height:18px;stroke:var(--blue-dk);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.topbar-name{font-size:15px;font-weight:600;color:var(--t1);flex:1}
+.topbar-cnt{font-size:11px;color:var(--t3)}
+
+.tabs{background:var(--card);border-bottom:0.5px solid var(--bd);display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:sticky;top:54px;z-index:19}
+.tabs::-webkit-scrollbar{display:none}
+.tabadd{flex-shrink:0;width:46px;display:flex;align-items:center;justify-content:center;font-size:21px;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;-webkit-user-select:none;user-select:none}
+.tabadd:hover{color:var(--blue)}
+.tab{flex-shrink:0;padding:11px 15px;font-size:13px;font-weight:500;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;-webkit-user-select:none;user-select:none;transition:all .15s;display:flex;align-items:center;gap:6px}
+.tab.on{color:var(--blue-dk);border-bottom-color:var(--blue)}
+.tab-cnt{font-size:10px;background:var(--card2);border:0.5px solid var(--bd2);border-radius:20px;padding:1px 6px;color:var(--t3)}
+.tab.on .tab-cnt{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue-dk)}
+
+.page{max-width:760px;margin:0 auto;padding:16px 14px}
+
+.client-hd{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.cav{width:40px;height:40px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--blue-dk);flex-shrink:0}
+.cn{font-size:16px;font-weight:600;color:var(--t1)}
+.cm{font-size:12px;color:var(--t3);margin-top:1px}
+.cact{margin-left:auto;display:flex;gap:7px}
+.btn-icon{width:38px;height:38px;border-radius:var(--rs);border:0.5px solid var(--bd2);background:var(--card2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2);flex-shrink:0}
+.btn-icon:hover{background:var(--bd)}
+.btn-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
+.btn-icon.danger:hover{color:var(--red-dk);border-color:var(--red-bd)}
+
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px}
+.mbg.show{display:flex}
+.modal{background:var(--card);border:0.5px solid var(--bd);border-radius:var(--r);padding:20px;width:100%;max-width:400px}
+.mhd{font-size:15px;font-weight:600;margin-bottom:15px;display:flex;align-items:center;justify-content:space-between;color:var(--t1)}
+.mcl{font-size:20px;color:var(--t3);cursor:pointer;line-height:1}
+.mcl:hover{color:var(--t1)}
+.fl{font-size:12px;color:var(--t2);margin-bottom:5px;margin-top:13px;font-weight:500}
+.fl:first-of-type{margin-top:0}
+input[type=text]{width:100%;height:42px;border:0.5px solid var(--bd2);border-radius:var(--rs);padding:0 13px;font-size:14px;background:var(--card2);color:var(--t1);outline:none;-webkit-appearance:none}
+input[type=text]:focus{border-color:var(--blue)}
+
+.empty-global{text-align:center;padding:60px 20px;color:var(--t3)}
+.empty-global svg{width:44px;height:44px;stroke:var(--bd2);fill:none;stroke-width:1.3;margin-bottom:14px}
+.empty-global p{font-size:15px;color:var(--t2)}
+.empty-global small{font-size:13px;display:block;margin-top:6px}
+
+/* ── ALBUMS ── */
+.album-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px}
+.album-card:hover{border-color:var(--blue-bd)}
+.album-thumb{width:100%;aspect-ratio:4/3;background:#13161d;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.album-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.album-thumb svg{width:26px;height:26px;stroke:var(--bd2);fill:none;stroke-width:1.4}
+.album-count{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;display:flex;align-items:center;gap:3px}
+.album-count svg{width:10px;height:10px;stroke:#fff;fill:none;stroke-width:2}
+.album-info{padding:9px 10px}
+.album-name{font-size:12.5px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.album-meta{font-size:10.5px;color:var(--t3);margin-top:2px}
+.album-add-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed var(--bd2);border-radius:var(--rs);aspect-ratio:4/3;cursor:pointer;color:var(--t3);background:var(--card2);transition:border-color .15s,color .15s}
+.album-add-card:hover{border-color:var(--blue);color:var(--blue-dk)}
+.album-add-card svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6}
+.album-add-card span{font-size:11.5px;font-weight:500}
+
+/* ── ALBUM DETAIL MODAL ── */
+.modal.xwide{max-width:680px}
+.album-hd{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.album-hd-name{font-size:15px;font-weight:600;color:var(--t1);flex:1}
+.album-link-tag{font-size:11px;color:var(--blue-dk);background:var(--blue-bg);border:0.5px solid var(--blue-bd);padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;max-width:100%;overflow:hidden}
+.album-link-tag svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
+.album-link-tag span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-bottom:13px}
+.photo-tile{position:relative;aspect-ratio:1;border-radius:7px;overflow:hidden;border:0.5px solid var(--bd)}
+.photo-tile img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-del{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;line-height:1}
+.photo-del:hover{background:var(--red)}
+.photo-add-tile{aspect-ratio:1;border-radius:7px;border:1.5px dashed var(--bd2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t3);background:var(--card2)}
+.photo-add-tile:hover{border-color:var(--blue);color:var(--blue-dk)}
+.photo-add-tile svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6}
+.paste-zone{border:1.5px dashed var(--bd2);border-radius:var(--rs);padding:16px 14px;text-align:center;background:var(--card2);margin-bottom:11px;transition:border-color .2s,background .2s}
+.paste-zone.flash{border-color:var(--green);background:var(--green-bg)}
+.paste-zone svg{width:22px;height:22px;stroke:var(--t3);fill:none;stroke-width:1.6;margin-bottom:6px}
+.paste-zone p{font-size:13px;color:var(--t1);font-weight:500;margin-bottom:2px}
+.paste-zone span{font-size:11.5px;color:var(--t3)}
+.paste-zone kbd{background:var(--card);border:0.5px solid var(--bd2);border-radius:4px;padding:1px 6px;font-family:monospace;font-size:11px;color:var(--t1)}
+input[type=file].hidden-input{display:none}
+
+.ai-result-box{background:var(--card2);border:0.5px solid var(--bd);border-radius:var(--rs);padding:12px 13px;margin-top:4px;font-size:13px;color:var(--t1);line-height:1.7;white-space:pre-wrap;cursor:pointer;transition:border-color .15s}
+.ai-result-box:hover{border-color:var(--blue-bd)}
+
+.vn-item{background:var(--card2);border:0.5px solid var(--bd);border-radius:var(--rs);padding:11px 13px;margin-bottom:8px}
+.vn-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.vn-mood{font-size:16px;line-height:1;flex-shrink:0}
+.vn-meta{font-size:11px;color:var(--t3);flex:1}
+.vn-del{font-size:14px;color:var(--t3);cursor:pointer;padding:2px 5px;border-radius:4px}
+.vn-del:hover{color:var(--red-dk);background:var(--red-bg)}
+.vn-text{font-size:13px;color:var(--t1);line-height:1.6;white-space:pre-wrap}
+.mood-good{background:#eaf3de!important;border-color:#c0dd97!important;color:#27500a!important}
+.mood-ok{background:var(--amber-bg)!important;border-color:#fac775!important;color:var(--amber)!important}
+.mood-pass{background:var(--red-bg)!important;border-color:var(--red-bd)!important;color:var(--red-dk)!important}
+
+/* ── RESULT WINDOW ── */
+.result-modal{max-width:480px}
+.result-hd{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding-bottom:13px;border-bottom:0.5px solid var(--bd)}
+.result-ico{width:36px;height:36px;border-radius:9px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.result-ico svg{width:19px;height:19px;stroke:var(--green);fill:none;stroke-width:1.8;stroke-linecap:round}
+.result-title{font-size:15px;font-weight:600;color:var(--t1)}
+.result-sub{font-size:11.5px;color:var(--t3);margin-top:2px}
+.result-body{font-size:13.5px;color:var(--t1);line-height:1.85;white-space:pre-wrap;max-height:50vh;overflow-y:auto;background:var(--card2);border:0.5px solid var(--bd);border-radius:var(--rs);padding:14px 15px}
+.result-actions{display:flex;gap:9px;margin-top:14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── COMPARE ── */
+.album-card{background:var(--card2);border:0.5px solid var(--bd);border-radius:var(--rs);overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s;position:relative}
+.album-card.selected{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg)}
+.album-sel-check{position:absolute;top:7px;left:7px;width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;transition:all .15s}
+.album-card.selected .album-sel-check{background:var(--blue);border-color:var(--blue)}
+.album-sel-check svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2.5;opacity:0}
+.album-card.selected .album-sel-check svg{opacity:1}
+
+.compare-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:0.5px solid var(--bd);padding:11px 16px;display:flex;align-items:center;gap:10px;z-index:50;transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+.compare-bar.show{transform:translateY(0)}
+.compare-bar-label{font-size:13px;color:var(--t1);flex:1}
+.compare-bar-label b{color:var(--blue-dk)}
+.compare-bar-thumbs{display:flex;gap:6px;align-items:center}
+.compare-bar-thumb{width:32px;height:32px;border-radius:6px;background:var(--card2);border:0.5px solid var(--bd);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.compare-bar-thumb img{width:100%;height:100%;object-fit:cover}
+.compare-bar-thumb svg{width:16px;height:16px;stroke:var(--t3);fill:none;stroke-width:1.5}
+
+.compare-modal{max-width:900px;width:100%}
+.compare-grid{display:grid;gap:13px;margin-top:4px}
+.compare-col{background:var(--card2);border:0.5px solid var(--bd);border-radius:var(--rs);padding:14px;min-width:0}
+.compare-col-name{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px;padding-bottom:9px;border-bottom:0.5px solid var(--bd);display:flex;align-items:center;gap:8px}
+.compare-col-thumb{width:36px;height:36px;border-radius:6px;overflow:hidden;flex-shrink:0;border:0.5px solid var(--bd)}
+.compare-col-thumb img{width:100%;height:100%;object-fit:cover}
+.compare-col-thumb svg{width:18px;height:18px;stroke:var(--t3);fill:none;stroke-width:1.4}
+.compare-field{display:flex;flex-direction:column;gap:2px;padding:7px 0;border-bottom:0.5px solid var(--bd)}
+.compare-field:last-child{border-bottom:none}
+.compare-field-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em}
+.compare-field-val{font-size:13px;color:var(--t1);font-weight:500;line-height:1.4}
+.compare-field-val.hi{color:var(--green)}
+.compare-field-val.lo{color:var(--red)}
+.compare-no-data{font-size:12px;color:var(--t3);text-align:center;padding:20px;font-style:italic}
+.ai-result-meta{font-size:10.5px;color:var(--t3);margin-top:8px;padding-top:8px;border-top:0.5px solid var(--bd)}
+
+/* link picker inside album modal */
+.link-picker{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.link-pick-chip{font-size:11.5px;padding:5px 10px;border-radius:20px;border:0.5px solid var(--bd2);background:var(--card2);color:var(--t2);cursor:pointer;-webkit-user-select:none;user-select:none;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.link-pick-chip.on{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue-dk)}
+
+.panel{background:var(--card);border-radius:var(--r);border:0.5px solid var(--bd);padding:15px;margin-bottom:13px}
+.ph{font-size:12px;font-weight:600;color:var(--t2);letter-spacing:.05em;margin-bottom:11px;display:flex;align-items:center;gap:7px}
+.ph svg{width:15px;height:15px;stroke:var(--t3);fill:none;stroke-width:2;stroke-linecap:round}
+
+textarea{width:100%;min-height:110px;border:0.5px solid var(--bd2);border-radius:var(--rs);padding:11px 13px;font-size:14px;font-family:monospace;background:var(--card2);color:var(--t1);resize:vertical;outline:none;line-height:1.65;-webkit-appearance:none}
+textarea:focus{border-color:var(--blue)}
+textarea::placeholder{color:var(--t3)}
+
+.dz{border:1.5px dashed var(--bd2);border-radius:var(--rs);padding:26px 16px;text-align:center;background:var(--card2);cursor:pointer;transition:border-color .2s,background .2s;-webkit-user-select:none;user-select:none}
+.dz:hover,.dz.over{border-color:var(--blue);background:var(--blue-bg)}
+.dz svg{width:30px;height:30px;stroke:var(--t3);fill:none;stroke-width:1.5;stroke-linecap:round;margin-bottom:8px}
+.dz p{font-size:14px;color:var(--t1);margin-bottom:3px;font-weight:500}
+.dz span{font-size:12px;color:var(--t3)}
+input[type=file]{display:none}
+.or{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:12px;color:var(--t3)}
+.or::before,.or::after{content:'';flex:1;height:0.5px;background:var(--bd)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 18px;border-radius:var(--rs);font-size:14px;font-weight:500;cursor:pointer;border:0.5px solid var(--bd2);background:var(--card2);color:var(--t1);min-height:46px;-webkit-user-select:none;user-select:none;transition:background .15s}
+.btn:active{transform:scale(.97)}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0}
+.btn-blue{background:var(--blue);border-color:var(--blue);color:#0c1e30}
+.btn-blue:active{background:#5badf5}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+
+.found-summary{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.found-cnt{font-size:13px;color:var(--t2)}
+.found-cnt b{color:var(--t1)}
+.filter-row{display:flex;gap:7px;flex-wrap:wrap}
+.filter-chip{font-size:12px;padding:5px 11px;border-radius:20px;border:0.5px solid var(--bd2);background:var(--card2);color:var(--t2);cursor:pointer;-webkit-user-select:none;user-select:none;transition:all .15s}
+.filter-chip.on{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue-dk)}
+
+/* link list */
+.link-list{display:flex;flex-direction:column;gap:9px}
+.link-card{display:flex;align-items:center;gap:12px;background:var(--card2);border:0.5px solid var(--bd);border-radius:var(--rs);padding:12px 14px;text-decoration:none;color:var(--t1);transition:background .15s,border-color .15s}
+.link-card:active{background:var(--bd);transform:scale(.99)}
+.link-favicon{width:34px;height:34px;border-radius:8px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.link-favicon svg{width:18px;height:18px;stroke:var(--blue-dk);fill:none;stroke-width:1.8;stroke-linecap:round}
+.link-body{flex:1;min-width:0}
+.link-host{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:2px}
+.link-url{font-size:11.5px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:break-all}
+.link-meta{font-size:10.5px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:5px}
+.link-badge{font-size:10px;padding:1px 7px;border-radius:20px;background:var(--blue-bg);color:var(--blue-dk);border:0.5px solid var(--blue-bd);flex-shrink:0}
+.link-badge.other{background:var(--card);color:var(--t3);border-color:var(--bd2)}
+.link-go{flex-shrink:0;color:var(--t3);display:flex;align-items:center}
+.link-go svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.link-copy{flex-shrink:0;width:32px;height:32px;border-radius:8px;border:0.5px solid var(--bd2);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t3);transition:all .15s}
+.link-copy:hover{color:var(--blue-dk);border-color:var(--blue-bd)}
+.link-copy svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+.link-copy.copied{color:var(--green);border-color:#1f6b4a}
+.link-del{flex-shrink:0;width:32px;height:32px;border-radius:8px;border:0.5px solid var(--bd2);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t3);transition:all .15s}
+.link-del:hover{color:var(--red-dk);border-color:var(--red-bd);background:var(--red-bg)}
+.link-del svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+
+.empty{text-align:center;padding:36px 16px;color:var(--t3)}
+.empty svg{width:36px;height:36px;stroke:var(--bd2);fill:none;stroke-width:1.4;margin-bottom:10px}
+.empty p{font-size:13px}
+
+@media(max-width:480px){
+  .link-host{font-size:12.5px}
+  .link-url{font-size:11px}
+  .btn{font-size:13px;padding:10px 14px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-ico">
+    <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+  </div>
+  <div class="topbar-name">客戶資料庫</div>
+  <div class="topbar-cnt" id="tb-cnt">0 位客戶</div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="page" id="page">
+  <div class="empty-global" id="empty-global">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    <p>尚未建立任何客戶</p>
+    <small>點上方「＋」新增第一位客戶</small>
+  </div>
+
+  <div id="client-view" style="display:none">
+    <div class="client-hd">
+      <div class="cav" id="cv-avatar"></div>
+      <div>
+        <div class="cn" id="cv-name"></div>
+        <div class="cm" id="cv-meta"></div>
+      </div>
+      <div class="cact">
+        <div class="btn-icon" onclick="openEditClient()" title="編輯客戶">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"/></svg>
+        </div>
+        <div class="btn-icon danger" onclick="delActiveClient()" title="刪除客戶">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        上傳 LINE 對話檔
+      </div>
+      <div class="dz" id="dz" onclick="document.getElementById('fi').click()">
+        <input type="file" id="fi" accept=".txt,.log,text/plain" onchange="onFile(event)">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        <p>點擊選擇 LINE 對話文字檔</p>
+        <span>或直接將檔案拖曳到此處 · 支援 .txt 格式</span>
+      </div>
+      <div class="or">或直接貼上對話文字</div>
+      <textarea id="ta" placeholder="將 LINE 對話文字貼到這裡…&#10;&#10;工具會自動找出所有網址，列出讓你直接點選開啟"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="doExtract()">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          擷取網址
+        </button>
+        <button class="btn" onclick="doClear()">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+          清除
+        </button>
+      </div>
+    </div>
+
+    <div class="panel" id="results-panel" style="display:none">
+      <div class="found-summary">
+        <div class="ph" style="margin-bottom:0">
+          <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          找到的網址
+        </div>
+        <span class="found-cnt" id="found-cnt"></span>
+      </div>
+      <div class="filter-row" id="filter-row" style="margin-bottom:13px"></div>
+      <div class="link-list" id="link-list"></div>
+    </div>
+
+    <div class="panel">
+      <div class="found-summary">
+        <div class="ph" style="margin-bottom:0">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          物件相冊
+        </div>
+        <span class="found-cnt" id="album-cnt"></span>
+      </div>
+      <div class="album-grid" id="album-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- New Album Modal -->
+<div class="mbg" id="m-newalbum">
+  <div class="modal">
+    <div class="mhd">新增物件相冊<span class="mcl" onclick="cm('m-newalbum')">×</span></div>
+    <div class="fl">相冊名稱 *</div><input type="text" id="al-name" placeholder="例：力行路驚翠廬 5樓">
+    <div id="al-link-picker-wrap" style="display:none">
+      <div class="fl">關聯網址（選填）</div>
+      <div class="link-picker" id="al-link-picker"></div>
+    </div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn btn-blue" onclick="createAlbum()">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>建立相冊
+      </button>
+      <button class="btn" onclick="cm('m-newalbum')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Album Detail Modal -->
+<div class="mbg" id="m-album">
+  <div class="modal xwide">
+    <div class="mhd">
+      <span id="album-detail-title">相冊</span>
+      <span class="mcl" onclick="cm('m-album')">×</span>
+    </div>
+    <div class="album-hd">
+      <a class="album-link-tag" id="album-detail-link" href="#" target="_blank" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        <span id="album-detail-link-text"></span>
+      </a>
+      <div class="btn-icon danger" onclick="deleteAlbum()" title="刪除相冊" style="margin-left:auto">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      </div>
+    </div>
+
+    <div class="ph"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>照片</div>
+    <div class="paste-zone" id="paste-zone" tabindex="0">
+      <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      <p>點這裡後按 <kbd>Ctrl+V</kbd>（Mac 為 <kbd>⌘+V</kbd>）貼上截圖</p>
+      <span>複製 LINE 對話中的截圖後，點此區域貼上即可，或下方手動上傳</span>
+    </div>
+    <div class="photo-grid" id="photo-grid"></div>
+    <input type="file" class="hidden-input" id="photo-input" accept="image/*" multiple onchange="onPhotoUpload(event)">
+
+    <div id="album-ai-saved" style="margin-top:10px"></div>
+
+    <!-- 看房筆記 -->
+    <div style="margin-top:14px;padding-top:13px;border-top:0.5px solid var(--bd)">
+      <div class="ph" style="margin-bottom:9px">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--t3);fill:none;stroke-width:2;stroke-linecap:round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        看房筆記
+      </div>
+      <div id="viewing-notes-list"></div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px">
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <button class="btn btn-sm" id="mood-good" onclick="setMood('good')" style="gap:5px">
+            <span>😊</span>客戶喜歡
+          </button>
+          <button class="btn btn-sm" id="mood-ok" onclick="setMood('ok')" style="gap:5px">
+            <span>🤔</span>考慮中
+          </button>
+          <button class="btn btn-sm" id="mood-pass" onclick="setMood('pass')" style="gap:5px">
+            <span>❌</span>不考慮
+          </button>
+        </div>
+        <textarea id="note-input" style="min-height:72px;font-size:13px" placeholder="記錄客戶看房後的想法、優缺點、出價意願、下次跟進方向…"></textarea>
+        <button class="btn btn-blue" onclick="addViewingNote()" style="align-self:flex-start">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新增筆記
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Result Window Modal -->
+<div class="mbg" id="m-result">
+  <div class="modal result-modal">
+    <div class="result-hd">
+      <div class="result-ico">
+        <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      </div>
+      <div style="flex:1">
+        <div class="result-title" id="result-title">物件資訊整理</div>
+        <div class="result-sub" id="result-sub"></div>
+      </div>
+      <span class="mcl" onclick="cm('m-result')">×</span>
+    </div>
+    <div class="result-body" id="result-body"></div>
+    <div class="result-actions">
+      <button class="btn btn-blue" onclick="copyResultText()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>複製文字</button>
+      <button class="btn" onclick="cm('m-result')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- New / Edit Client Modal -->
+<div class="mbg" id="m-client">
+  <div class="modal">
+    <div class="mhd"><span id="m-client-title">新增客戶</span><span class="mcl" onclick="cm('m-client')">×</span></div>
+    <div class="fl">客戶姓名 *</div><input type="text" id="cf-name" placeholder="">
+    <div class="fl">聯絡電話</div><input type="text" id="cf-phone" placeholder="">
+    <div class="fl">備註</div><input type="text" id="cf-note" placeholder="預算、偏好地區等">
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn btn-blue" onclick="saveClient()">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>儲存
+      </button>
+      <button class="btn" onclick="cm('m-client')">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const HOUSE_DOMAINS=['591.com.tw','sinyi.com.tw','yungching.com','x.ychouse.tw','ycut.com.tw','realestate.com.tw','rakuya.com.tw','leju.com','etwarm.com','century21.com.tw'];
+const GENERAL_URL_RE=/https?:\/\/[^\s"'<>\]）)]{6,}/gi;
+
+let clients=[];      // [{id,name,phone,note,links:[{url,hostname,isHouse}],activeFilter}]
+let activeId=null;
+let editingClientId=null;
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function save(){
+  try{
+    localStorage.setItem('line_link_clients_v1',JSON.stringify(clients));
+  }catch(e){
+    alert('儲存失敗：瀏覽器儲存空間已滿。建議刪除一些較舊的照片或相冊以釋放空間。');
+  }
+}
+function load(){try{const d=localStorage.getItem('line_link_clients_v1');if(d)clients=JSON.parse(d)}catch(e){}}
+function om(id){document.getElementById(id).classList.add('show')}
+function cm(id){document.getElementById(id).classList.remove('show')}
+document.querySelectorAll('.mbg').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show')}));
+
+const dz=document.getElementById('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(f)readFile(f)});
+function onFile(e){const f=e.target.files[0];if(f)readFile(f)}
+function readFile(f){const r=new FileReader();r.onload=ev=>{document.getElementById('ta').value=ev.target.result;doExtract()};r.readAsText(f,'UTF-8')}
+
+function isHouseDomain(hostname){return HOUSE_DOMAINS.some(d=>hostname.includes(d))}
+
+// ── TABS ──
+function renderTabs(){
+  document.getElementById('tb-cnt').textContent=clients.length+' 位客戶';
+  let h='<div class="tabadd" onclick="openNewClient()" title="新增客戶">＋</div>';
+  clients.forEach(c=>{
+    const cnt=(c.links||[]).length;
+    h+=`<div class="tab${c.id===activeId?' on':''}" onclick="selClient('${c.id}')">${c.name}${cnt?`<span class="tab-cnt">${cnt}</span>`:''}</div>`;
+  });
+  document.getElementById('tabs').innerHTML=h;
+}
+
+function selClient(id){
+  activeId=id;
+  compareIds.clear();
+  renderTabs();renderClientView();
+  document.getElementById('empty-global').style.display='none';
+  document.getElementById('client-view').style.display='block';
+}
+
+function renderClientView(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  document.getElementById('cv-avatar').textContent=(c.name||'?').slice(0,2);
+  document.getElementById('cv-name').textContent=c.name;
+  document.getElementById('cv-meta').innerHTML=[c.phone,c.note].filter(Boolean).join(' · ')||'&nbsp;';
+  document.getElementById('ta').value='';
+  document.getElementById('fi').value='';
+
+  const panel=document.getElementById('results-panel');
+  if((c.links||[]).length){
+    panel.style.display='block';
+    renderFilters();
+    renderLinks();
+  }else{
+    panel.style.display='none';
+  }
+  renderAlbums();
+}
+
+// ── CLIENT CRUD ──
+function openNewClient(){
+  editingClientId=null;
+  document.getElementById('m-client-title').textContent='新增客戶';
+  document.getElementById('cf-name').value='';
+  document.getElementById('cf-phone').value='';
+  document.getElementById('cf-note').value='';
+  om('m-client');
+}
+function openEditClient(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  editingClientId=c.id;
+  document.getElementById('m-client-title').textContent='編輯客戶';
+  document.getElementById('cf-name').value=c.name||'';
+  document.getElementById('cf-phone').value=c.phone||'';
+  document.getElementById('cf-note').value=c.note||'';
+  om('m-client');
+}
+function saveClient(){
+  const name=(document.getElementById('cf-name').value||'').trim();
+  if(!name){alert('請輸入客戶姓名');return}
+  const phone=document.getElementById('cf-phone').value.trim();
+  const note=document.getElementById('cf-note').value.trim();
+  if(editingClientId){
+    const c=clients.find(x=>x.id===editingClientId);
+    if(c){c.name=name;c.phone=phone;c.note=note}
+  }else{
+    const c={id:uid(),name,phone,note,links:[]};
+    clients.push(c);
+    activeId=c.id;
+  }
+  save();cm('m-client');renderTabs();
+  if(activeId)selClient(activeId);
+}
+function delActiveClient(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  if(!confirm(`刪除客戶「${c.name}」及其所有已擷取的網址？`))return;
+  clients=clients.filter(x=>x.id!==activeId);
+  activeId=clients.length?clients[clients.length-1].id:null;
+  save();renderTabs();
+  if(activeId){selClient(activeId)}
+  else{document.getElementById('client-view').style.display='none';document.getElementById('empty-global').style.display='block'}
+}
+
+// ── EXTRACT ──
+function doExtract(){
+  const c=clients.find(x=>x.id===activeId);
+  if(!c){alert('請先新增或選擇一位客戶');return}
+  const txt=document.getElementById('ta').value.trim();
+  if(!txt){alert('請先貼入或上傳對話文字');return}
+
+  const raw=(txt.match(GENERAL_URL_RE)||[]).map(u=>u.replace(/[.,;!?）)>\]]+$/,''));
+  const unique=[...new Set(raw)];
+
+  const newLinks=unique.map(u=>{
+    let hostname='';try{hostname=new URL(u).hostname.replace(/^www\./,'')}catch{hostname=u}
+    return{url:u,hostname,isHouse:isHouseDomain(hostname)};
+  });
+
+  if(!c.links)c.links=[];
+  let added=0;
+  newLinks.forEach(l=>{
+    if(!c.links.some(x=>x.url===l.url)){c.links.push(l);added++}
+  });
+  c.links.sort((a,b)=>(b.isHouse-a.isHouse));
+  c.activeFilter='all';
+  save();
+  renderTabs();
+
+  const panel=document.getElementById('results-panel');
+  if(!c.links.length){
+    panel.style.display='block';
+    document.getElementById('found-cnt').textContent='';
+    document.getElementById('filter-row').innerHTML='';
+    document.getElementById('link-list').innerHTML='<div class="empty"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>沒有找到任何網址</p></div>';
+    return;
+  }
+  renderFilters();
+  renderLinks();
+  panel.style.display='block';
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderFilters(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const links=c.links||[];
+  const houseCnt=links.filter(l=>l.isHouse).length;
+  const otherCnt=links.length-houseCnt;
+  const f=c.activeFilter||'all';
+  let h=`<div class="filter-chip${f==='all'?' on':''}" onclick="setFilter('all')">全部 ${links.length}</div>`;
+  if(houseCnt) h+=`<div class="filter-chip${f==='house'?' on':''}" onclick="setFilter('house')">房屋網站 ${houseCnt}</div>`;
+  if(otherCnt) h+=`<div class="filter-chip${f==='other'?' on':''}" onclick="setFilter('other')">其他連結 ${otherCnt}</div>`;
+  document.getElementById('filter-row').innerHTML=h;
+}
+
+function setFilter(f){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  c.activeFilter=f;save();renderFilters();renderLinks();
+}
+
+function renderLinks(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const links=c.links||[];
+  const f=c.activeFilter||'all';
+  let list=links;
+  if(f==='house') list=links.filter(l=>l.isHouse);
+  if(f==='other') list=links.filter(l=>!l.isHouse);
+
+  document.getElementById('found-cnt').textContent=`顯示 ${list.length} / ${links.length} 個`;
+
+  if(!list.length){
+    document.getElementById('link-list').innerHTML='<div class="empty"><p>此分類沒有網址</p></div>';
+    return;
+  }
+
+  document.getElementById('link-list').innerHTML=list.map((l)=>{
+    const idx=links.indexOf(l);
+    const icon=l.isHouse
+      ?`<svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`
+      :`<svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+    return `<a class="link-card" href="${l.url}" target="_blank" rel="noopener">
+      <div class="link-favicon">${icon}</div>
+      <div class="link-body">
+        <div class="link-host">${l.hostname}</div>
+        <div class="link-url">${l.url}</div>
+        <div class="link-meta">
+          <span class="link-badge${l.isHouse?'':' other'}">${l.isHouse?'房屋網站':'其他連結'}</span>
+        </div>
+      </div>
+      <div class="link-copy" onclick="copyLink(event,${idx})" title="複製網址">
+        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      </div>
+      <div class="link-del" onclick="deleteLink(event,${idx})" title="刪除">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      </div>
+      <div class="link-go"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </a>`;
+  }).join('');
+}
+
+function deleteLink(e,idx){
+  e.preventDefault();e.stopPropagation();
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  c.links.splice(idx,1);
+  save();
+  renderTabs();
+  renderFilters();
+  renderLinks();
+  const panel=document.getElementById('results-panel');
+  if(!(c.links||[]).length) panel.style.display='none';
+}
+
+function copyLink(e,idx){
+  e.preventDefault();e.stopPropagation();
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const url=c.links[idx].url;
+  const el=e.currentTarget;
+  const done=()=>{
+    el.classList.add('copied');
+    el.innerHTML='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+    setTimeout(()=>{
+      el.classList.remove('copied');
+      el.innerHTML='<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+    },1500);
+  };
+  if(navigator.clipboard){navigator.clipboard.writeText(url).then(done)}
+  else{
+    const ta=document.createElement('textarea');ta.value=url;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');done()}catch(err){}
+    document.body.removeChild(ta);
+  }
+}
+
+function doClear(){
+  const c=clients.find(x=>x.id===activeId);
+  document.getElementById('ta').value='';
+  document.getElementById('fi').value='';
+  if(c){
+    if(!(c.links||[]).length){return}
+    if(!confirm('清除這位客戶已擷取的所有網址？'))return;
+    c.links=[];
+    save();renderTabs();renderClientView();
+  }
+}
+
+// ── ALBUMS ──
+let openAlbumId=null;
+
+function renderAlbums(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  if(!c.albums)c.albums=[];
+  document.getElementById('album-cnt').textContent=c.albums.length+' 個相冊';
+  let h='';
+  c.albums.forEach(a=>{
+    const cover=(a.photos&&a.photos[0])?a.photos[0].data:null;
+    const sel=compareIds.has(a.id);
+    const hasResult=a.aiResults&&a.aiResults.length>0;
+    const latestMood=(a.viewingNotes||[]).find(n=>n.mood)?.mood||null;
+    const moodEmoji=latestMood?MOOD_MAP[latestMood]?.emoji:'';
+    h+=`<div class="album-card${sel?' selected':''}" onclick="openAlbum('${a.id}')">
+      <div class="album-sel-check" onclick="toggleCompare(event,'${a.id}')" title="選擇比較">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="album-thumb">
+        ${cover?`<img src="${cover}" alt="">`:`<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`}
+        <div class="album-count"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>${(a.photos||[]).length}</div>
+        ${moodEmoji?`<div style="position:absolute;top:6px;right:6px;font-size:16px;line-height:1">${moodEmoji}</div>`:''}
+      </div>
+      <div class="album-info">
+        <div class="album-name">${a.name}</div>
+        <div class="album-meta">${hasResult?'✓ 已分析':'未分析'}${a.linkedUrl?' · 已關聯網址':''}</div>
+      </div>
+    </div>`;
+  });
+  h+=`<div class="album-add-card" onclick="openNewAlbum()">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>新增相冊</span>
+  </div>`;
+  document.getElementById('album-grid').innerHTML=h;
+  updateCompareBar();
+}
+
+function openNewAlbum(){
+  document.getElementById('al-name').value='';
+  const c=clients.find(x=>x.id===activeId);
+  const links=(c&&c.links)||[];
+  const wrap=document.getElementById('al-link-picker-wrap');
+  if(links.length){
+    wrap.style.display='block';
+    document.getElementById('al-link-picker').innerHTML=links.map((l,i)=>
+      `<div class="link-pick-chip" data-i="${i}" onclick="pickAlLink(this)">${l.hostname}</div>`
+    ).join('');
+  }else{
+    wrap.style.display='none';
+  }
+  om('m-newalbum');
+}
+function pickAlLink(el){
+  document.querySelectorAll('#al-link-picker .link-pick-chip').forEach(c=>{if(c!==el)c.classList.remove('on')});
+  el.classList.toggle('on');
+}
+function createAlbum(){
+  const name=(document.getElementById('al-name').value||'').trim();
+  if(!name){alert('請輸入相冊名稱');return}
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  if(!c.albums)c.albums=[];
+  const picked=document.querySelector('#al-link-picker .link-pick-chip.on');
+  let linkedUrl=null;
+  if(picked){const idx=+picked.dataset.i;linkedUrl=(c.links||[])[idx]?.url||null}
+  const a={id:uid(),name,linkedUrl,photos:[],aiResults:[]};
+  c.albums.push(a);
+  save();cm('m-newalbum');renderAlbums();
+  openAlbum(a.id);
+}
+
+function openAlbum(aid){
+  openAlbumId=aid;
+  currentMood=null;
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===aid);if(!a)return;
+  document.getElementById('album-detail-title').textContent=a.name;
+  const linkEl=document.getElementById('album-detail-link');
+  if(a.linkedUrl){
+    linkEl.style.display='inline-flex';
+    linkEl.href=a.linkedUrl;
+    let h='';try{h=new URL(a.linkedUrl).hostname.replace(/^www\./,'')}catch{h=a.linkedUrl}
+    document.getElementById('album-detail-link-text').textContent=h;
+  }else{
+    linkEl.style.display='none';
+  }
+  renderPhotoGrid();
+  renderAiResults();
+  renderViewingNotes();
+  om('m-album');
+  setTimeout(()=>{
+    const z=document.getElementById('paste-zone');
+    if(z)z.focus();
+  },100);
+}
+
+function renderPhotoGrid(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  let h=(a.photos||[]).map((p,i)=>`<div class="photo-tile"><img src="${p.data}" alt=""><div class="photo-del" onclick="deletePhoto(${i})">×</div></div>`).join('');
+  h+=`<div class="photo-add-tile" onclick="document.getElementById('photo-input').click()"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>`;
+  document.getElementById('photo-grid').innerHTML=h;
+  // show/hide analyse button
+  const hasPhotos=(a.photos||[]).length>0;
+  let analyseRow=document.getElementById('analyse-row');
+  if(!analyseRow){
+    analyseRow=document.createElement('div');
+    analyseRow.id='analyse-row';
+    analyseRow.style.cssText='display:none;margin-top:11px';
+    analyseRow.innerHTML=`<button class="btn btn-blue" style="width:100%;justify-content:center" onclick="analysePhotos()"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>AI 分析截圖</button><div id="analyse-status" style="display:none;font-size:12px;color:var(--t2);margin-top:8px;display:flex;align-items:center;gap:7px"></div>`;
+    document.getElementById('photo-grid').insertAdjacentElement('afterend',analyseRow);
+  }
+  analyseRow.style.display=hasPhotos?'block':'none';
+}
+
+function onPhotoUpload(e){
+  const files=Array.from(e.target.files||[]);
+  addPhotosToAlbum(files);
+  e.target.value='';
+}
+
+function addPhotosToAlbum(files){
+  if(!files.length)return;
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  let remaining=files.length;
+  files.forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      if(!a.photos)a.photos=[];
+      a.photos.push({data:ev.target.result,name:f.name||'貼上的截圖'});
+      remaining--;
+      if(remaining===0){save();renderPhotoGrid();renderAlbums()}
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+function flashPasteZone(){
+  const z=document.getElementById('paste-zone');
+  if(!z)return;
+  z.classList.add('flash');
+  setTimeout(()=>z.classList.remove('flash'),500);
+}
+
+function handlePasteEvent(e){
+  // only react while album modal is open
+  const modal=document.getElementById('m-album');
+  if(!modal.classList.contains('show'))return;
+  const items=(e.clipboardData||window.clipboardData)?.items;
+  if(!items)return;
+  const imgFiles=[];
+  for(const item of items){
+    if(item.type&&item.type.startsWith('image/')){
+      const blob=item.getAsFile();
+      if(blob)imgFiles.push(blob);
+    }
+  }
+  if(imgFiles.length){
+    e.preventDefault();
+    addPhotosToAlbum(imgFiles);
+    flashPasteZone();
+  }
+}
+document.addEventListener('paste',handlePasteEvent);
+
+// click paste-zone to focus it (helps mobile/desktop show "paste" affordance and lets Ctrl+V target it)
+document.addEventListener('click',e=>{
+  if(e.target.closest('#paste-zone')){
+    document.getElementById('paste-zone').focus();
+  }
+});
+
+function deletePhoto(idx){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  a.photos.splice(idx,1);
+  save();renderPhotoGrid();renderAlbums();
+}
+
+function deleteAlbum(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  if(!confirm(`刪除相冊「${a.name}」及其所有照片與整理結果？`))return;
+  c.albums=c.albums.filter(x=>x.id!==openAlbumId);
+  save();cm('m-album');renderAlbums();
+}
+
+async function analysePhotos(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  const photos=a.photos||[];
+  if(!photos.length){alert('請先貼上或上傳截圖');return}
+
+  const PROMPT=`你是台灣房產資料整理專家。以下截圖可能是 591、永慶、信義、樂屋等平台網頁截圖，或房仲 DM，或 LINE 對話物件卡片。請仔細讀取截圖中所有文字（包含側邊欄、詳細介紹區），整理出以下欄位，用 **粗體標籤** 格式回覆，不需要 JSON：\n\n**案名 / 社區名稱**\n**總價、坪單價、車位價格（如有）**\n**地址 / 行政區**\n**格局（房廳衛）**\n**樓層（X樓/共幾樓）**\n**權狀坪數、主建物坪數、陽台坪數**\n**公設比、得房率**\n**座向**\n**完工日期、建物結構、屋齡**\n**管理費**\n**停車位**\n**其他重點設施或特色**\n\n若某項資訊截圖中確實沒有，請省略該欄位。`;
+
+  // ── 嘗試直接呼叫 API ──
+  const row=document.getElementById('analyse-row');
+  const origHTML=row.innerHTML;
+  const origBtn=row.querySelector('button');
+  if(origBtn){origBtn.disabled=true;origBtn.innerHTML='<div style="width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0"></div>分析中…'}
+
+  const content=[{type:'text',text:PROMPT}];
+  photos.forEach(p=>{const b=p.data.split(',')[1];const m=p.data.split(';')[0].replace('data:','');content.push({type:'image',source:{type:'base64',media_type:m,data:b}})});
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,messages:[{role:'user',content}]})
+    });
+    const data=await resp.json();
+    if(data.error)throw new Error(data.error.message);
+    const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').trim();
+    if(!text)throw new Error('未取得結果');
+    // 成功：存結果並開啟結果視窗
+    if(!a.aiResults)a.aiResults=[];
+    const entry={text,date:new Date().toLocaleDateString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})};
+    a.aiResults.unshift(entry);
+    save();renderAiResults();openResultWindow(a.name,entry);
+    resetAnalyseRow();
+  }catch(err){
+    // 失敗（本地 HTML 被擋）：自動切換到複製貼上流程
+    resetAnalyseRow();
+    row.innerHTML=`
+      <div style="background:var(--blue-bg);border:0.5px solid var(--blue-bd);border-radius:var(--rs);padding:13px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:600;color:var(--blue-dk);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+          請改用 Claude 分析
+          <span style="cursor:pointer;font-size:18px;color:var(--t3)" onclick="resetAnalyseRow()">×</span>
+        </div>
+        <div style="font-size:12px;color:var(--blue-dk);line-height:1.8;margin-bottom:10px">
+          1️⃣ 點「複製指令」<br>
+          2️⃣ 打開 Claude App，貼上指令<br>
+          3️⃣ 把截圖一起傳給 Claude<br>
+          4️⃣ 把 Claude 的回覆貼到下方
+        </div>
+        <button id="cp-prompt-btn" class="btn btn-blue" style="width:100%;justify-content:center;margin-bottom:14px" onclick="doCopyPrompt()">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          複製指令
+        </button>
+        <div style="font-size:12px;font-weight:600;color:var(--blue-dk);margin-bottom:6px">貼入 Claude 的分析結果</div>
+        <textarea id="ai-paste-input" style="min-height:88px;font-size:13px;width:100%;background:var(--card2);border:0.5px solid var(--bd2);border-radius:var(--rs);padding:9px 11px;color:var(--t1);resize:vertical;outline:none;line-height:1.6" placeholder="把 Claude 回覆的整理結果貼到這裡…"></textarea>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn btn-blue" onclick="saveManualResult()">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><polyline points="20 6 9 17 4 12"/></svg>
+            儲存結果
+          </button>
+        </div>
+      </div>`;
+    window._analysePrompt=PROMPT;
+  }
+}
+
+function doCopyPrompt(){
+  const txt=window._analysePrompt||'';
+  const btn=document.getElementById('cp-prompt-btn');
+  const done=()=>{btn.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="20 6 9 17 4 12"/></svg>已複製！';btn.style.cssText+='background:var(--green-bg)!important;border-color:#1f6b4a!important;color:var(--green)!important'};
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(done)}
+  else{const ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch{}document.body.removeChild(ta)}
+}
+
+function saveManualResult(){
+  const txt=(document.getElementById('ai-paste-input')?.value||'').trim();
+  if(!txt){alert('請先貼入 Claude 的分析結果');return}
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  if(!a.aiResults)a.aiResults=[];
+  const entry={text:txt,date:new Date().toLocaleDateString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})};
+  a.aiResults.unshift(entry);
+  save();renderAiResults();
+  openResultWindow(a.name,entry);
+  resetAnalyseRow();
+}
+
+function resetAnalyseRow(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  const row=document.getElementById('analyse-row');if(!row)return;
+  const hasPhotos=(a.photos||[]).length>0;
+  row.style.display=hasPhotos?'block':'none';
+  row.innerHTML=`<button class="btn btn-blue" style="width:100%;justify-content:center" onclick="analysePhotos()">
+    <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    AI 分析截圖
+  </button>`;
+}
+
+function renderAiResults(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  const results=a.aiResults||[];
+  const box=document.getElementById('album-ai-saved');if(!box)return;
+  if(!results.length){box.innerHTML='';return}
+  box.innerHTML=results.map((r,i)=>
+    `<div class="ai-result-box" onclick="openResultWindow('${a.name.replace(/'/g,"\\'")}', albumResultByIndex(${i}))">${r.text.slice(0,120)}…<div class="ai-result-meta">整理於 ${r.date} · 點擊查看全文 <span style="cursor:pointer;color:var(--red-dk);margin-left:8px" onclick="event.stopPropagation();deleteAiResult(${i})">刪除</span></div></div>`
+  ).join('');
+}
+function albumResultByIndex(i){
+  const c=clients.find(x=>x.id===activeId);if(!c)return null;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return null;
+  return(a.aiResults||[])[i];
+}
+function deleteAiResult(idx){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  a.aiResults.splice(idx,1);
+  save();renderAiResults();
+}
+
+// ── RESULT WINDOW ──
+let currentResultText='';
+function openResultWindow(albumName,entry){
+  if(!entry)return;
+  currentResultText=entry.text;
+  document.getElementById('result-title').textContent=albumName||'物件資訊整理';
+  document.getElementById('result-sub').textContent='整理於 '+entry.date;
+  document.getElementById('result-body').textContent=entry.text;
+  om('m-result');
+}
+function copyResultText(){
+  const txt=currentResultText;if(!txt)return;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(()=>{
+      const btn=event.currentTarget;
+      const orig=btn.innerHTML;
+      btn.innerHTML='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>已複製';
+      setTimeout(()=>btn.innerHTML=orig,1500);
+    });
+  }
+}
+
+// ── VIEWING NOTES ──
+let currentMood=null;
+const MOOD_MAP={
+  good:{emoji:'😊',label:'客戶喜歡',cls:'mood-good'},
+  ok:  {emoji:'🤔',label:'考慮中',  cls:'mood-ok'},
+  pass:{emoji:'❌',label:'不考慮',  cls:'mood-pass'},
+};
+
+function setMood(m){
+  currentMood=currentMood===m?null:m;
+  ['good','ok','pass'].forEach(k=>{
+    const btn=document.getElementById('mood-'+k);
+    if(!btn)return;
+    btn.className='btn btn-sm';
+    if(currentMood===k) btn.classList.add(MOOD_MAP[k].cls);
+  });
+}
+
+function addViewingNote(){
+  const txt=(document.getElementById('note-input')?.value||'').trim();
+  if(!txt&&!currentMood){alert('請輸入筆記內容或選擇看房心得');return}
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  if(!a.viewingNotes)a.viewingNotes=[];
+  a.viewingNotes.unshift({
+    text:txt,
+    mood:currentMood||null,
+    date:new Date().toLocaleDateString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+  });
+  const inp=document.getElementById('note-input');
+  if(inp)inp.value='';
+  currentMood=null;
+  ['good','ok','pass'].forEach(k=>{
+    const btn=document.getElementById('mood-'+k);
+    if(btn)btn.className='btn btn-sm';
+  });
+  save();renderViewingNotes();renderAlbums();
+}
+
+function renderViewingNotes(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  const box=document.getElementById('viewing-notes-list');if(!box)return;
+  const notes=a.viewingNotes||[];
+  if(!notes.length){box.innerHTML='';return}
+  box.innerHTML=notes.map((n,i)=>{
+    const m=n.mood?MOOD_MAP[n.mood]:null;
+    return`<div class="vn-item">
+      <div class="vn-header">
+        ${m?`<span class="vn-mood">${m.emoji}</span><span class="vn-meta" style="font-weight:500;color:var(--t1)">${m.label}</span>`:'<span class="vn-meta"></span>'}
+        <span class="vn-meta" style="text-align:right">${n.date}</span>
+        <span class="vn-del" onclick="delViewingNote(${i})">×</span>
+      </div>
+      ${n.text?`<div class="vn-text">${n.text}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function delViewingNote(i){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const a=(c.albums||[]).find(x=>x.id===openAlbumId);if(!a)return;
+  if(a.viewingNotes)a.viewingNotes.splice(i,1);
+  save();renderViewingNotes();renderAlbums();
+}
+
+// ── INIT ──
+load();
+renderTabs();
+if(clients.length){selClient(clients[0].id)}
+</script>
+
+<!-- Compare floating bar -->
+<div class="compare-bar" id="compare-bar">
+  <div class="compare-bar-thumbs" id="compare-bar-thumbs"></div>
+  <div class="compare-bar-label">已選 <b id="compare-bar-cnt">0</b> 個物件</div>
+  <button class="btn" onclick="clearCompare()" style="min-height:36px;padding:6px 11px;font-size:12px">清除</button>
+  <button class="btn btn-blue" onclick="openCompare()" style="min-height:36px;padding:6px 13px;font-size:12px">
+    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="18" rx="1"/></svg>
+    開始比較
+  </button>
+</div>
+
+<!-- Compare modal -->
+<div class="mbg" id="m-compare">
+  <div class="modal compare-modal" style="max-height:90vh;overflow-y:auto">
+    <div class="mhd">物件比較<span class="mcl" onclick="cm('m-compare')">×</span></div>
+    <div id="compare-body"></div>
+    <div style="display:flex;gap:9px;margin-top:14px">
+      <button class="btn" onclick="cm('m-compare')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── COMPARE ──
+let compareIds=new Set();
+
+function toggleCompare(e,aid){
+  e.stopPropagation();
+  if(compareIds.has(aid)){compareIds.delete(aid)}
+  else{
+    if(compareIds.size>=4){alert('最多同時比較 4 個物件');return}
+    compareIds.add(aid);
+  }
+  renderAlbums();
+  updateCompareBar();
+}
+
+function updateCompareBar(){
+  const bar=document.getElementById('compare-bar');
+  const cnt=compareIds.size;
+  document.getElementById('compare-bar-cnt').textContent=cnt;
+  bar.classList.toggle('show',cnt>=2);
+  const c=clients.find(x=>x.id===activeId);
+  const thumbs=document.getElementById('compare-bar-thumbs');
+  if(!c){thumbs.innerHTML='';return}
+  thumbs.innerHTML=[...compareIds].map(aid=>{
+    const a=(c.albums||[]).find(x=>x.id===aid);
+    const cover=a&&a.photos&&a.photos[0]?a.photos[0].data:null;
+    return `<div class="compare-bar-thumb">${cover?`<img src="${cover}" alt="">`:`<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`}</div>`;
+  }).join('');
+}
+
+function clearCompare(){compareIds.clear();renderAlbums();updateCompareBar()}
+
+// ── Parse AI result text into structured fields ──
+function parseResult(text){
+  if(!text)return null;
+  const result={};
+
+  // ── Step 1: parse **Bold Label** blocks (Claude's standard format)
+  // Each block: **label** \n content \n (until next **)
+  const segments=[];
+  const boldRe=/\*\*([^*\n]+)\*\*/g;
+  let bm, prev=null;
+  while((bm=boldRe.exec(text))!==null){
+    if(prev!==null) segments.push({label:prev.label, body:text.slice(prev.end, bm.index).trim()});
+    prev={label:bm[1].trim(), end:bm.index+bm[0].length};
+  }
+  if(prev) segments.push({label:prev.label, body:text.slice(prev.end).trim()});
+
+  const FIELD_MAP=[
+    {key:'name',       labels:['案名','社區名稱']},
+    {key:'price',      labels:['總價','坪單價','車位價格','價格']},
+    {key:'address',    labels:['地址','行政區']},
+    {key:'layout',     labels:['格局']},
+    {key:'floor',      labels:['樓層']},
+    {key:'area_reg',   labels:['權狀坪數','主建物坪數','建坪']},
+    {key:'public',     labels:['公設比','得房率']},
+    {key:'facing',     labels:['座向']},
+    {key:'complete',   labels:['完工日期','建物結構','屋齡','完工']},
+    {key:'mgmt',       labels:['管理費']},
+    {key:'parking_info',labels:['停車位','停車']},
+    {key:'features',   labels:['其他重點','重點設施','特色','其他']},
+  ];
+
+  segments.forEach(seg=>{
+    FIELD_MAP.forEach(f=>{
+      if(result[f.key])return;
+      if(f.labels.some(lbl=>seg.label.includes(lbl))){
+        result[f.key]=seg.body.replace(/\n/g,' ').trim();
+      }
+    });
+  });
+
+  // ── Step 2: fallback for dash-list format "- 欄位：值"
+  if(!result.price){
+    const lines=text.split('\n');
+    lines.forEach((line,li)=>{
+      const clean=line.replace(/^[\-\*\s]+/,'').replace(/\*\*/g,'').trim();
+      FIELD_MAP.forEach(f=>{
+        if(result[f.key])return;
+        if(f.labels.some(lbl=>clean.startsWith(lbl)||clean.includes(lbl+'：')||clean.includes(lbl+'：'))){
+          const ci=Math.max(clean.indexOf('：'),clean.indexOf(':'));
+          result[f.key]=ci>-1?clean.slice(ci+1).trim():(lines[li+1]||'').trim();
+        }
+      });
+    });
+  }
+
+  // ── Step 3: extract sub-fields from combined blocks
+  if(result.price){
+    const t=result.price;
+    const totalM=t.match(/總價[^\d]*(\d[\d,,.]+\s*萬)/);
+    const unitM=t.match(/坪單價[^\d]*(\d[\d,.]+\s*萬[^；;\n]*)/);
+    const parkM=t.match(/車位[^\d]*(\d[\d,.]+\s*萬)/);
+    if(totalM)result.priceTotal=totalM[1];
+    if(unitM)result.unitprice=unitM[1];
+    if(parkM)result.parking=parkM[1];
+    // display price as total only if extracted
+    if(totalM)result.price=totalM[1];
+  }
+  if(result.area_reg){
+    const t=result.area_reg;
+    const regM=t.match(/(?:建坪|權狀)[^\d]*(\d[\d.]+\s*坪)/);
+    const mainM=t.match(/主建物[^\d]*(\d[\d.]+\s*坪)/);
+    const balM=t.match(/陽台[^\d]*(\d[\d.]+\s*坪)/);
+    if(regM)result.area_reg=regM[1];
+    if(mainM&&!result.area_main)result.area_main=mainM[1];
+    if(balM&&!result.area_bal)result.area_bal=balM[1];
+    // fallback: first number sequence + 坪
+    if(!result.area_reg){const fm=t.match(/(\d[\d.]+)\s*坪/);if(fm)result.area_reg=fm[1]+'坪';}
+  }
+  if(result.public){
+    const t=result.public;
+    const pubM=t.match(/公設比[^\d]*(\d[\d.]+\s*%?)/);
+    const effM=t.match(/得房率[^\d]*(\d[\d.]+\s*%?)/);
+    if(pubM&&!result.pubOnly)result.pubOnly=pubM[1]+(pubM[1].includes('%')?'':'%');
+    if(effM&&!result.efficiency)result.efficiency=effM[1]+(effM[1].includes('%')?'':'%');
+    if(pubM)result.public=result.pubOnly;
+  }
+  if(result.complete){
+    const t=result.complete;
+    const ageM=t.match(/屋齡[^\d]*(\d[\d.]+[年個月]*)/);
+    const strM=t.match(/(無電梯公寓|電梯大樓|透天[厝]?|鋼筋混凝土|SRC|RC|鋼骨[^\s；;，,]*|加強磚造)/);
+    if(ageM&&!result.age)result.age=ageM[1];
+    if(strM&&!result.structure)result.structure=strM[1];
+    // shorten complete to just date/year
+    const yearM=t.match(/民國\s*(\d+)\s*年|(\d{4})\s*年/);
+    if(yearM)result.complete=(yearM[1]?'民國'+yearM[1]+'年':yearM[2]+'年')+(t.includes('屋齡')?' (屋齡'+result.age+')':'');
+  }
+
+  return result;
+}
+
+const COMPARE_FIELDS=[
+  {key:'price',        label:'總價',       numeric:true, lowerBetter:true},
+  {key:'unitprice',    label:'坪單價',     numeric:true, lowerBetter:true},
+  {key:'parking',      label:'車位價格'},
+  {key:'layout',       label:'格局'},
+  {key:'floor',        label:'樓層'},
+  {key:'area_reg',     label:'權狀坪數',   numeric:true},
+  {key:'area_main',    label:'主建物坪數', numeric:true},
+  {key:'area_bal',     label:'陽台坪數',   numeric:true},
+  {key:'public',       label:'公設比',     numeric:true, lowerBetter:true},
+  {key:'efficiency',   label:'得房率',     numeric:true},
+  {key:'facing',       label:'座向'},
+  {key:'age',          label:'屋齡',       numeric:true, lowerBetter:true},
+  {key:'structure',    label:'建物結構'},
+  {key:'complete',     label:'完工時間'},
+  {key:'mgmt',         label:'管理費',     numeric:true, lowerBetter:true},
+  {key:'parking_info', label:'停車位'},
+  {key:'address',      label:'地址'},
+  {key:'features',     label:'特色重點'},
+];
+
+function extractNum(str){
+  if(!str)return null;
+  const m=str.match(/[\d,]+\.?\d*/);
+  return m?parseFloat(m[0].replace(/,/g,'')):null;
+}
+
+function openCompare(){
+  const c=clients.find(x=>x.id===activeId);if(!c)return;
+  const albums=[...compareIds].map(aid=>(c.albums||[]).find(x=>x.id===aid)).filter(Boolean);
+  if(albums.length<2){alert('請至少選擇 2 個物件');return}
+
+  // parse latest AI result for each album
+  const parsed=albums.map(a=>{
+    const latest=(a.aiResults&&a.aiResults[0])||null;
+    return{album:a,result:latest?parseResult(latest.text):null,raw:latest?latest.text:null};
+  });
+
+  const cols=parsed.length;
+  // build grid columns
+  const colsCSS=cols<=2?'repeat(2,1fr)':cols===3?'repeat(3,1fr)':'repeat(2,1fr)';
+
+  // header row
+  let headerCols=parsed.map(p=>{
+    const cover=p.album.photos&&p.album.photos[0]?p.album.photos[0].data:null;
+    return `<div class="compare-col-name">
+      <div class="compare-col-thumb">${cover?`<img src="${cover}" alt="">`:`<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`}</div>
+      <span>${p.album.name}</span>
+    </div>`;
+  }).join('');
+
+  // for each field, extract values and find best/worst
+  let fieldRows='';
+  COMPARE_FIELDS.forEach(f=>{
+    const vals=parsed.map(p=>p.result?p.result[f.key]:null);
+    const hasAny=vals.some(v=>v);
+    if(!hasAny)return;
+
+    let nums=null;
+    if(f.numeric){
+      nums=vals.map(v=>extractNum(v));
+      const validNums=nums.filter(n=>n!==null);
+      if(validNums.length>=2){
+        const best=f.lowerBetter?Math.min(...validNums):Math.max(...validNums);
+        const worst=f.lowerBetter?Math.max(...validNums):Math.min(...validNums);
+        nums=nums.map(n=>n===null?null:{val:n,isBest:n===best,isWorst:n===worst&&best!==worst});
+      }else nums=null;
+    }
+
+    const cells=vals.map((v,i)=>{
+      if(!v)return `<div class="compare-field"><div class="compare-field-label">${f.label}</div><div class="compare-field-val" style="color:var(--t3)">—</div></div>`;
+      let cls='';
+      if(nums&&nums[i]){cls=nums[i].isBest?' hi':nums[i].isWorst?' lo':'';}
+      return `<div class="compare-field"><div class="compare-field-label">${f.label}</div><div class="compare-field-val${cls}">${v}</div></div>`;
+    }).join('');
+    fieldRows+=cells;
+  });
+
+  // weave headers and fields into grid
+  // We build per-column content then display as CSS grid
+  const colContents=parsed.map((p,ci)=>{
+    const cover=p.album.photos&&p.album.photos[0]?p.album.photos[0].data:null;
+    let fields='';
+    if(!p.result){
+      fields=`<div class="compare-no-data">尚未有 AI 分析結果<br><small>請先在相冊內上傳截圖並點「AI 分析截圖」</small></div>`;
+    }else{
+      COMPARE_FIELDS.forEach(f=>{
+        const allVals=parsed.map(pp=>pp.result?pp.result[f.key]:null);
+        if(!allVals.some(v=>v))return;
+        const v=p.result[f.key];
+        let cls='';
+        if(f.numeric&&v){
+          const myNum=extractNum(v);
+          const allNums=allVals.map(vv=>extractNum(vv)).filter(n=>n!==null);
+          if(myNum!==null&&allNums.length>=2){
+            const best=f.lowerBetter?Math.min(...allNums):Math.max(...allNums);
+            const worst=f.lowerBetter?Math.max(...allNums):Math.min(...allNums);
+            if(myNum===best)cls=' hi';
+            else if(myNum===worst&&best!==worst)cls=' lo';
+          }
+        }
+        fields+=`<div class="compare-field"><div class="compare-field-label">${f.label}</div><div class="compare-field-val${cls}">${v||'—'}</div></div>`;
+      });
+    }
+    return `<div class="compare-col">
+      <div class="compare-col-name">
+        <div class="compare-col-thumb">${cover?`<img src="${cover}" alt="">`:`<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`}</div>
+        <span>${p.album.name}</span>
+      </div>
+      ${fields}
+    </div>`;
+  }).join('');
+
+  document.getElementById('compare-body').innerHTML=`
+    <div class="compare-grid" style="grid-template-columns:${colsCSS}">${colContents}</div>
+    <div style="font-size:11px;color:var(--t3);margin-top:11px;display:flex;gap:12px;flex-wrap:wrap">
+      <span style="color:var(--green)">■</span> 最優值 &nbsp;
+      <span style="color:var(--red)">■</span> 最差值 &nbsp;
+      <span style="color:var(--t3)">（數字欄位自動標色）</span>
+    </div>`;
+  om('m-compare');
+}
+</script>
+</body>
+</html>
