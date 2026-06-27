@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>屋主拜訪戰卡</title>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --red: #E24B4A;
+  --red-bg: #FCEBEB;
+  --red-text: #A32D2D;
+  --green: #639922;
+  --green-bg: #EAF3DE;
+  --green-text: #3B6D11;
+  --purple: #7F77DD;
+  --purple-bg: #EEEDFE;
+  --purple-text: #3C3489;
+  --orange: #BA7517;
+  --orange-bg: #FAEEDA;
+  --orange-text: #854F0B;
+  --gray: #888780;
+  --gray-bg: #F1EFE8;
+  --gray-text: #444441;
+  --bg: #F5F4F0;
+  --card: #FFFFFF;
+  --border: rgba(0,0,0,0.10);
+  --text: #2C2C2A;
+  --text2: #5F5E5A;
+  --radius: 14px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== Utility ===== */
+.hidden { display: none !important; }
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.badge-red { background: var(--red-bg); color: var(--red-text); }
+.badge-green { background: var(--green-bg); color: var(--green-text); }
+.badge-purple { background: var(--purple-bg); color: var(--purple-text); }
+.badge-orange { background: var(--orange-bg); color: var(--orange-text); }
+.badge-gray { background: var(--gray-bg); color: var(--gray-text); }
+
+/* ===== Header ===== */
+#header {
+  position: sticky; top: 0; z-index: 100;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px 10px;
+}
+.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.header-top h1 { font-size: 20px; font-weight: 700; color: var(--text); }
+#btn-add {
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+#btn-add:active { opacity: 0.8; }
+
+/* Search */
+#search-box {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  margin-bottom: 8px;
+}
+#search-box:focus { border-color: var(--purple); }
+
+/* Filter tabs */
+.filter-tabs {
+  display: flex; gap: 6px;
+  overflow-x: auto; padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.filter-tabs::-webkit-scrollbar { display: none; }
+.ftab {
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1.5px solid var(--border);
+  background: #fff;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ftab.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+
+/* ===== Card List ===== */
+#list-view { padding: 12px 12px 80px; }
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--text2); font-size: 15px; line-height: 1.8;
+}
+.empty-state .big { font-size: 48px; margin-bottom: 10px; }
+
+/* ===== Battle Card ===== */
+.bcard {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.1s;
+}
+.bcard:active { transform: scale(0.985); }
+.bcard-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.bcard-addr { font-size: 16px; font-weight: 700; color: var(--text); flex: 1; margin-right: 8px; line-height: 1.3; }
+.bcard-meta { display: flex; gap: 5px; flex-wrap: wrap; align-items: flex-start; }
+.bcard-owner { font-size: 15px; color: var(--text2); margin-bottom: 6px; }
+.bcard-goal { font-size: 13px; color: var(--text2); background: var(--bg); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; }
+.bcard-goal strong { color: var(--text); }
+.bcard-bottom { display: flex; justify-content: space-between; align-items: center; }
+.bcard-date { font-size: 12px; color: var(--gray); }
+.bcard-actions { display: flex; gap: 8px; }
+.btn-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  color: var(--text2);
+}
+.btn-icon:active { background: var(--border); }
+.btn-quick {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--purple-bg);
+  color: var(--purple-text);
+  border: none;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+.btn-quick:active { opacity: 0.8; }
+.incomplete-badge {
+  position: absolute; top: 12px; right: 12px;
+  background: var(--orange-bg); color: var(--orange-text);
+  font-size: 11px; font-weight: 600;
+  padding: 2px 7px; border-radius: 10px;
+}
+.priority-bar {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px; border-radius: var(--radius) 0 0 var(--radius);
+}
+.priority-high .priority-bar { background: var(--red); }
+.priority-mid .priority-bar { background: var(--orange); }
+.priority-low .priority-bar { background: var(--gray); }
+
+/* ===== Detail View ===== */
+#detail-view {
+  display: none;
+  padding: 0 0 80px;
+  min-height: 100vh;
+}
+#detail-header {
+  position: sticky; top: 0; z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+#detail-header h2 { font-size: 17px; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-back {
+  background: var(--bg);
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--text);
+}
+.btn-back:active { background: var(--border); }
+.btn-field-mode {
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.section {
+  background: #fff;
+  margin: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.section-title {
+  font-size: 13px; font-weight: 700;
+  color: var(--text2);
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid var(--bg);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.field-row {
+  display: flex; align-items: baseline;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--bg);
+  gap: 8px;
+}
+.field-row:last-child { border-bottom: none; }
+.field-label { font-size: 13px; color: var(--text2); min-width: 85px; flex-shrink: 0; }
+.field-value { font-size: 15px; color: var(--text); flex: 1; line-height: 1.5; word-break: break-all; }
+.field-value.big { font-size: 17px; font-weight: 600; }
+.script-box {
+  margin: 0 14px 12px;
+  background: var(--purple-bg);
+  border-radius: 10px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--purple);
+}
+.script-label { font-size: 12px; color: var(--purple-text); font-weight: 600; margin-bottom: 4px; text-transform: uppercase; }
+.script-text { font-size: 16px; color: var(--text); line-height: 1.6; }
+
+/* Visit result buttons */
+.result-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px 14px;
+}
+.result-btn {
+  padding: 12px 8px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.3;
+}
+.result-btn.selected { border-color: var(--purple); background: var(--purple-bg); color: var(--purple-text); }
+.result-btn:active { opacity: 0.7; }
+.note-area {
+  margin: 0 14px 12px;
+  width: calc(100% - 28px);
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  resize: vertical;
+  outline: none;
+  min-height: 70px;
+}
+.note-area:focus { border-color: var(--purple); }
+.save-result-btn {
+  margin: 0 14px 6px;
+  width: calc(100% - 28px);
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: var(--green);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.save-result-btn:active { opacity: 0.85; }
+.completion-bar-wrap {
+  padding: 4px 14px 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.completion-bar { flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.completion-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.3s; }
+.completion-pct { font-size: 12px; color: var(--green-text); font-weight: 600; min-width: 30px; }
+
+/* ===== Quick / Field Mode ===== */
+#quick-view {
+  display: none;
+  min-height: 100vh;
+  background: #1a1830;
+  padding: 0 0 40px;
+}
+#quick-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+#quick-header h2 { font-size: 16px; color: rgba(255,255,255,0.7); flex: 1; }
+.btn-exit-quick {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  color: #fff;
+  cursor: pointer;
+}
+.quick-main { padding: 20px 16px 0; }
+.quick-addr {
+  font-size: 26px; font-weight: 800;
+  color: #fff;
+  line-height: 1.2; margin-bottom: 8px;
+}
+.quick-feature {
+  font-size: 17px; color: rgba(255,255,255,0.7);
+  margin-bottom: 16px; line-height: 1.4;
+}
+.quick-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 16px 0; }
+.quick-label {
+  font-size: 12px; color: rgba(255,255,255,0.5);
+  font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 6px;
+}
+.quick-script1 {
+  font-size: 20px; color: #fff;
+  font-weight: 600; line-height: 1.5;
+  background: rgba(127,119,221,0.25);
+  border-radius: 12px; padding: 14px 16px;
+  margin-bottom: 10px;
+  border-left: 3px solid var(--purple);
+}
+.quick-script2 {
+  font-size: 17px; color: rgba(255,255,255,0.85);
+  line-height: 1.5;
+  background: rgba(255,255,255,0.07);
+  border-radius: 12px; padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.quick-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.quick-tag {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px; font-weight: 600;
+}
+.qtag-goal { background: rgba(99,153,34,0.25); color: #a8d970; }
+.qtag-type { background: rgba(127,119,221,0.3); color: #c8c5f8; }
+.quick-result-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #13112a;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.qr-btn {
+  flex: 1; min-width: 80px;
+  padding: 11px 6px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+}
+.qr-btn:active { background: rgba(255,255,255,0.15); }
+.qr-btn.sel { background: rgba(99,153,34,0.3); border-color: #639922; color: #a8d970; }
+
+/* ===== Edit Modal ===== */
+#modal-bg {
+  display: none;
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.5);
+  overflow-y: auto;
+}
+#modal-bg.show { display: block; }
+#modal {
+  background: #fff;
+  margin: 0 auto;
+  max-width: 560px;
+  min-height: 100vh;
+  padding: 0 0 30px;
+}
+#modal-header {
+  position: sticky; top: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+#modal-header h3 { font-size: 18px; font-weight: 700; }
+.modal-actions { display: flex; gap: 8px; }
+.btn-cancel {
+  padding: 9px 16px; border-radius: 10px;
+  background: var(--bg); border: none;
+  font-size: 15px; cursor: pointer; color: var(--text);
+}
+.btn-save {
+  padding: 9px 16px; border-radius: 10px;
+  background: var(--purple); border: none;
+  font-size: 15px; font-weight: 600;
+  color: #fff; cursor: pointer;
+}
+.form-section { padding: 14px 16px 0; }
+.form-section h4 {
+  font-size: 12px; font-weight: 700;
+  color: var(--text2); text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--bg);
+}
+.form-group { margin-bottom: 12px; }
+.form-group label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--text2); margin-bottom: 5px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%; padding: 11px 13px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px; font-family: inherit;
+  color: var(--text); background: var(--bg);
+  outline: none;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: var(--purple); }
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.priority-btns { display: flex; gap: 8px; }
+.pbtn {
+  flex: 1; padding: 10px 0;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; text-align: center; color: var(--text);
+}
+.pbtn.active-high { background: var(--red-bg); border-color: var(--red); color: var(--red-text); font-weight: 700; }
+.pbtn.active-mid { background: var(--orange-bg); border-color: var(--orange); color: var(--orange-text); font-weight: 700; }
+.pbtn.active-low { background: var(--gray-bg); border-color: var(--gray); color: var(--gray-text); font-weight: 700; }
+
+/* ===== Toast ===== */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #2C2C2A; color: #fff;
+  padding: 12px 20px; border-radius: 12px;
+  font-size: 15px; font-weight: 500;
+  z-index: 500; opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; }
+
+/* ===== Responsive ===== */
+@media (min-width: 600px) {
+  #list-view { max-width: 640px; margin: 0 auto; padding: 16px 16px 80px; }
+  #detail-view, #quick-view { max-width: 640px; margin: 0 auto; }
+  .result-grid { grid-template-columns: repeat(3, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== LIST VIEW ===== -->
+<div id="list-view">
+  <div id="header">
+    <div class="header-top">
+      <h1>🏠 拜訪戰卡</h1>
+      <div style="display:flex;gap:6px">
+        <button id="btn-add" onclick="openModal()">＋ 新增</button>
+        <div style="position:relative">
+          <button id="btn-menu" onclick="toggleMenu()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:16px;cursor:pointer">☰</button>
+          <div id="main-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);min-width:170px;z-index:200;overflow:hidden">
+            <button onclick="exportJSON()" style="display:block;width:100%;padding:12px 16px;font-size:14px;font-weight:500;color:var(--text);background:none;border:none;border-bottom:1px solid var(--bg);text-align:left;cursor:pointer">📤 匯出備份 JSON</button>
+            <button onclick="document.getElementById('import-file').click()" style="display:block;width:100%;padding:12px 16px;font-size:14px;font-weight:500;color:var(--text);background:none;border:none;border-bottom:1px solid var(--bg);text-align:left;cursor:pointer">📥 匯入備份 JSON</button>
+            <button onclick="markTodayAll()" style="display:block;width:100%;padding:12px 16px;font-size:14px;font-weight:500;color:var(--text);background:none;border:none;border-bottom:1px solid var(--bg);text-align:left;cursor:pointer">📅 全部設為今日</button>
+            <button onclick="clearAll()" style="display:block;width:100%;padding:12px 16px;font-size:14px;font-weight:500;color:var(--red-text);background:none;border:none;text-align:left;cursor:pointer">🗑️ 清除所有資料</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <input id="search-box" type="search" placeholder="搜尋地址或屋主稱呼…" oninput="renderList()" />
+    <div class="filter-tabs" id="filter-tabs">
+      <button class="ftab active" data-filter="all" onclick="setFilter('all',this)">全部</button>
+      <button class="ftab" data-filter="today" onclick="setFilter('today',this)">📅 今日</button>
+      <button class="ftab" data-filter="unvisited" onclick="setFilter('unvisited',this)">未拜訪</button>
+      <button class="ftab" data-filter="high" onclick="setFilter('high',this)">🔴 高優先</button>
+      <button class="ftab" data-filter="followup" onclick="setFilter('followup',this)">追蹤中</button>
+    </div>
+  </div>
+
+  <div id="card-container"></div>
+</div>
+
+<!-- ===== DETAIL VIEW ===== -->
+<div id="detail-view">
+  <div id="detail-header">
+    <button class="btn-back" onclick="showList()">← 返回</button>
+    <h2 id="detail-title"></h2>
+    <button class="btn-field-mode" onclick="showQuick()">現場模式</button>
+  </div>
+  <div id="detail-body"></div>
+</div>
+
+<!-- ===== QUICK/FIELD VIEW ===== -->
+<div id="quick-view">
+  <div id="quick-header">
+    <button class="btn-exit-quick" onclick="showDetail()">← 離開</button>
+    <h2>現場快速模式</h2>
+  </div>
+  <div id="quick-body"></div>
+</div>
+
+<!-- ===== EDIT MODAL ===== -->
+<div id="modal-bg">
+  <div id="modal">
+    <div id="modal-header">
+      <h3 id="modal-title">新增戰卡</h3>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">取消</button>
+        <button class="btn-save" onclick="saveCard()">儲存</button>
+      </div>
+    </div>
+    <div id="modal-form"></div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
+<div id="toast"></div>
+
+<script>
+// ===== DATA =====
+const STORAGE_KEY = 'battle_cards_v1';
+let cards = [];
+let currentFilter = 'all';
+let currentCardId = null;
+
+// 初始化讀取資料
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    cards = raw ? JSON.parse(raw) : [];
+  } catch(e) { cards = []; }
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+}
+
+
+// ===== STATUS / LABELS =====
+const STATUS_LABEL = { unvisited:'未拜訪', visited:'已拜訪', followup:'待追蹤' };
+const STATUS_COLOR = { unvisited:'badge-red', visited:'badge-green', followup:'badge-orange' };
+const OWNER_TYPE_LABEL = { urgent:'急售型', observing:'觀望型', defensive:'防備型' };
+const PRIORITY_LABEL = { high:'高', mid:'中', low:'低' };
+const RESULT_OPTIONS = ['沒遇到人','有遇到但拒絕','願意聊天','留下聯絡方式','約下次時間','有賣意願'];
+
+function getCompletion(c) {
+  const fields = [c.addr, c.owner, c.type, c.script1, c.script2, c.minGoal, c.ownerType, c.reasons];
+  const filled = fields.filter(f => f && f.trim()).length;
+  return Math.round((filled / fields.length) * 100);
+}
+
+function isToday(dateStr) {
+  if (!dateStr) return false;
+  return dateStr === new Date().toISOString().split('T')[0];
+}
+
+function formatDate(isoStr) {
+  if (!isoStr) return '';
+  const d = new Date(isoStr);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+// ===== FILTER =====
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+function getFiltered() {
+  const q = (document.getElementById('search-box').value||'').trim().toLowerCase();
+  return cards.filter(c => {
+    if (q && !((c.addr||'').toLowerCase().includes(q) || (c.owner||'').toLowerCase().includes(q))) return false;
+    if (currentFilter === 'today') return isToday(c.visitDate);
+    if (currentFilter === 'unvisited') return c.status === 'unvisited';
+    if (currentFilter === 'high') return c.priority === 'high';
+    if (currentFilter === 'followup') return c.status === 'followup';
+    return true;
+  });
+}
+
+// ===== RENDER LIST =====
+function renderList() {
+  const container = document.getElementById('card-container');
+  const filtered = getFiltered();
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state"><div class="big">📋</div>沒有符合的戰卡<br><small>點右上角「新增戰卡」開始</small></div>`;
+    return;
+  }
+
+  // Sort: today first, then by priority
+  const pOrder = { high:0, mid:1, low:2 };
+  filtered.sort((a,b) => {
+    const aToday = isToday(a.visitDate) ? 0 : 1;
+    const bToday = isToday(b.visitDate) ? 0 : 1;
+    if (aToday !== bToday) return aToday - bToday;
+    return (pOrder[a.priority]||2) - (pOrder[b.priority]||2);
+  });
+
+  container.innerHTML = filtered.map(c => {
+    const pct = getCompletion(c);
+    const incomplete = pct < 70 ? `<span class="incomplete-badge">⚠ 資料不完整</span>` : '';
+    const todayTag = isToday(c.visitDate) ? `<span class="badge badge-green">今日</span>` : '';
+    const statusTag = `<span class="badge ${STATUS_COLOR[c.status]||'badge-gray'}">${STATUS_LABEL[c.status]||''}</span>`;
+    const priorityClass = `priority-${c.priority||'low'}`;
+    const ownerTypeText = OWNER_TYPE_LABEL[c.ownerType] || '';
+
+    return `<div class="bcard ${priorityClass}" onclick="showDetail(${JSON.stringify(c.id)})">
+      <div class="priority-bar"></div>
+      ${incomplete}
+      <div class="bcard-top">
+        <div class="bcard-addr">${c.addr || '（未填地址）'}</div>
+        <div class="bcard-meta">${todayTag}${statusTag}</div>
+      </div>
+      <div class="bcard-owner">👤 ${c.owner||'（未填屋主）'} ${ownerTypeText ? `· ${ownerTypeText}` : ''}</div>
+      ${c.ownerAddr ? `<div class="bcard-goal" style="color:var(--purple-text)"><strong>現居：</strong>${c.ownerAddr}</div>` : ''}
+      ${c.price ? `<div class="bcard-goal" style="color:var(--red-text)"><strong>售價：</strong>${c.price}${c.layout?' ・ '+c.layout:''}</div>` : ''}
+      ${c.feature ? `<div class="bcard-goal"><strong>辨識特徵：</strong>${c.feature}</div>` : ''}
+      <div class="bcard-goal"><strong>本次目標：</strong>${c.minGoal||'（未設定）'}</div>
+      <div class="bcard-bottom">
+        <div class="bcard-date">${c.visitDate ? `📅 ${c.visitDate}` : '未設定日期'}</div>
+        <div class="bcard-actions">
+          <button class="btn-icon" onclick="event.stopPropagation();openModal(${JSON.stringify(c.id)})" title="編輯">✏️</button>
+          <button class="btn-icon" onclick="event.stopPropagation();deleteCard(${JSON.stringify(c.id)})" title="刪除">🗑️</button>
+          <button class="btn-quick" onclick="event.stopPropagation();showQuickById(${JSON.stringify(c.id)})">現場</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== DETAIL VIEW =====
+function showDetail(id) {
+  if (id) currentCardId = id;
+  const c = cards.find(x => x.id === currentCardId);
+  if (!c) return;
+
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('quick-view').style.display = 'none';
+  document.getElementById('detail-view').style.display = 'block';
+  document.getElementById('detail-title').textContent = c.addr || '（未填地址）';
+
+  const pct = getCompletion(c);
+  const statusBadge = `<span class="badge ${STATUS_COLOR[c.status]||'badge-gray'}">${STATUS_LABEL[c.status]||''}</span>`;
+
+  document.getElementById('detail-body').innerHTML = `
+    <!-- 完成度 -->
+    <div class="section" style="margin-top:10px">
+      <div class="section-title">完成度</div>
+      <div class="completion-bar-wrap">
+        <div class="completion-bar"><div class="completion-fill" style="width:${pct}%"></div></div>
+        <div class="completion-pct">${pct}%</div>
+        ${statusBadge}
+      </div>
+    </div>
+
+    <!-- 基本資訊 -->
+    <div class="section">
+      <div class="section-title">基本資訊</div>
+      <div class="field-row"><div class="field-label">出售地址</div><div class="field-value big">${c.addr||'—'}</div></div>
+      ${c.ownerAddr ? `<div class="field-row"><div class="field-label" style="color:var(--purple-text)">屋主現居</div><div class="field-value" style="color:var(--purple-text);font-weight:600">${c.ownerAddr}</div></div>` : ''}
+      ${c.price ? `<div class="field-row"><div class="field-label">售價</div><div class="field-value big" style="color:var(--red-text)">${c.price}</div></div>` : ''}
+      ${c.layout ? `<div class="field-row"><div class="field-label">格局</div><div class="field-value">${c.layout}</div></div>` : ''}
+      ${c.building ? `<div class="field-row"><div class="field-label">社區/大樓</div><div class="field-value">${c.building}</div></div>` : ''}
+      ${c.feature ? `<div class="field-row"><div class="field-label">辨識特徵</div><div class="field-value">${c.feature}</div></div>` : ''}
+      <div class="field-row"><div class="field-label">屋主稱呼</div><div class="field-value big">${c.owner||'—'}</div></div>
+      ${c.contact ? `<div class="field-row"><div class="field-label">聯絡方式</div><div class="field-value"><a href="tel:${c.contact}" style="color:var(--purple)">${c.contact}</a></div></div>` : ''}
+      <div class="field-row"><div class="field-label">物件類型</div><div class="field-value">${c.type||'—'}</div></div>
+      <div class="field-row"><div class="field-label">拜訪日期</div><div class="field-value">${c.visitDate||'未設定'}</div></div>
+      <div class="field-row"><div class="field-label">優先順序</div><div class="field-value">${PRIORITY_LABEL[c.priority]||'—'}</div></div>
+      <div class="field-row"><div class="field-label">屋主類型</div><div class="field-value">${OWNER_TYPE_LABEL[c.ownerType]||'—'}</div></div>
+    </div>
+
+    <!-- 委託策略 -->
+    <div class="section">
+      <div class="section-title">委託策略</div>
+      ${c.reasons ? `<div class="field-row"><div class="field-label">委託理由</div><div class="field-value">${c.reasons}</div></div>` : ''}
+      <div class="field-row"><div class="field-label">本次目標</div><div class="field-value big" style="color:var(--purple-text)">${c.minGoal||'—'}</div></div>
+    </div>
+
+    <!-- 開場話術 -->
+    <div class="section">
+      <div class="section-title">開場話術</div>
+      <div style="padding:12px 14px 4px">
+        <div class="script-box">
+          <div class="script-label">第一句開場</div>
+          <div class="script-text">${c.script1||'（未填）'}</div>
+        </div>
+        ${c.script2 ? `<div class="script-box" style="background:var(--green-bg);border-left-color:var(--green)">
+          <div class="script-label" style="color:var(--green-text)">第二句追問</div>
+          <div class="script-text">${c.script2}</div>
+        </div>` : ''}
+      </div>
+    </div>
+
+    <!-- 拜訪紀錄 -->
+    <div class="section">
+      <div class="section-title">拜訪結果紀錄</div>
+      <div class="result-grid" id="result-grid">
+        ${RESULT_OPTIONS.map(r => `<button class="result-btn ${c.visitResult===r?'selected':''}" onclick="selectResult(${JSON.stringify(r)})">${r}</button>`).join('')}
+      </div>
+      <textarea class="note-area" id="note-input" placeholder="補充備註…">${c.note||''}</textarea>
+      ${c.followup ? `<div style="padding:0 14px 6px;font-size:13px;color:var(--text2)">📌 下次跟進：${c.followup}</div>` : ''}
+      <textarea class="note-area" id="followup-input" placeholder="下次跟進重點…">${c.followup||''}</textarea>
+      <button class="save-result-btn" onclick="saveVisitResult()">✅ 儲存拜訪結果</button>
+    </div>
+
+    <!-- 編輯按鈕 -->
+    <div style="padding:6px 14px">
+      <button style="width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);font-size:15px;cursor:pointer;color:var(--text)" onclick="openModal(currentCardId)">✏️ 編輯完整資料</button>
+    </div>
+  `;
+
+  // 儲存目前選中的結果
+  window._selectedResult = c.visitResult || '';
+}
+
+function selectResult(r) {
+  window._selectedResult = r;
+  document.querySelectorAll('.result-btn').forEach(b => {
+    b.classList.toggle('selected', b.textContent === r);
+  });
+  // 自動設定對應狀態
+  const statusMap = {
+    '沒遇到人': 'unvisited',
+    '有遇到但拒絕': 'visited',
+    '願意聊天': 'visited',
+    '留下聯絡方式': 'followup',
+    '約下次時間': 'followup',
+    '有賣意願': 'followup'
+  };
+  const c = cards.find(x => x.id === currentCardId);
+  if (c && statusMap[r]) c.status = statusMap[r];
+}
+
+function saveVisitResult() {
+  const c = cards.find(x => x.id === currentCardId);
+  if (!c) return;
+  c.visitResult = window._selectedResult || '';
+  c.note = document.getElementById('note-input').value;
+  c.followup = document.getElementById('followup-input').value;
+  if (c.visitResult && c.visitResult !== '沒遇到人') c.status = 'visited';
+  if (['留下聯絡方式','約下次時間','有賣意願'].includes(c.visitResult)) c.status = 'followup';
+  c.updatedAt = new Date().toISOString();
+  saveData();
+  showToast('✅ 已儲存拜訪結果');
+  showDetail();
+}
+
+function showList() {
+  document.getElementById('detail-view').style.display = 'none';
+  document.getElementById('quick-view').style.display = 'none';
+  document.getElementById('list-view').style.display = 'block';
+  renderList();
+}
+
+// ===== QUICK/FIELD MODE =====
+function showQuickById(id) {
+  currentCardId = id;
+  showQuick();
+}
+
+function showQuick() {
+  const c = cards.find(x => x.id === currentCardId);
+  if (!c) return;
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('detail-view').style.display = 'none';
+  document.getElementById('quick-view').style.display = 'block';
+
+  window._selectedResult = c.visitResult || '';
+
+  document.getElementById('quick-body').innerHTML = `
+    <div class="quick-main">
+      <div class="quick-addr">${c.addr || '（未填地址）'}</div>
+      ${c.ownerAddr ? `<div style="font-size:14px;color:rgba(255,255,255,.55);margin:-8px 0 10px;"><span style="background:rgba(127,119,221,.3);border-radius:6px;padding:2px 8px;">🚪 現居：${c.ownerAddr}</span></div>` : ''}
+      ${c.price ? `<div style="font-size:16px;color:#f9c74f;font-weight:700;margin-bottom:8px;">💰 ${c.price}${c.layout?' ・ '+c.layout:''}</div>` : ''}
+      <div class="quick-feature">${c.feature || c.building || '（無辨識特徵）'}</div>
+      <div class="quick-tags">
+        <span class="quick-tag qtag-type">👤 ${c.owner||'屋主'} · ${OWNER_TYPE_LABEL[c.ownerType]||'未知'}</span>
+        <span class="quick-tag qtag-goal">🎯 ${c.minGoal||'未設定'}</span>
+      </div>
+      <div class="quick-divider"></div>
+      <div class="quick-label">第一句開場</div>
+      <div class="quick-script1">${c.script1||'（未填開場句）'}</div>
+      ${c.script2 ? `<div class="quick-label">第二句追問</div><div class="quick-script2">${c.script2}</div>` : ''}
+      <div style="height:120px"></div>
+    </div>
+    <div class="quick-result-bar" id="qr-bar">
+      ${RESULT_OPTIONS.map(r => `<button class="qr-btn ${c.visitResult===r?'sel':''}" onclick="qrSelect(${JSON.stringify(r)})">${r}</button>`).join('')}
+    </div>
+  `;
+}
+
+function qrSelect(r) {
+  window._selectedResult = r;
+  document.querySelectorAll('.qr-btn').forEach(b => {
+    b.classList.toggle('sel', b.textContent === r);
+  });
+  const c = cards.find(x => x.id === currentCardId);
+  if (!c) return;
+  c.visitResult = r;
+  const statusMap = { '沒遇到人':'unvisited','有遇到但拒絕':'visited','願意聊天':'visited','留下聯絡方式':'followup','約下次時間':'followup','有賣意願':'followup' };
+  if (statusMap[r]) c.status = statusMap[r];
+  c.updatedAt = new Date().toISOString();
+  saveData();
+  showToast(`✅ 記錄：${r}`);
+}
+
+// ===== EDIT MODAL =====
+function openModal(id, prefill) {
+  const c = id ? cards.find(x => x.id === id) : null;
+  document.getElementById('modal-title').textContent = c ? '編輯戰卡' : '新增戰卡';
+  currentCardId = c ? c.id : null;
+  const p = prefill || {};
+
+  document.getElementById('modal-form').innerHTML = `
+    <div class="form-section">
+      <h4>📍 基本資訊</h4>
+      <div class="form-group">
+        <label>🏠 出售物件地址 *</label>
+        <input id="f-addr" type="text" placeholder="例：大安區和平東路一段56號4樓" value="${c?.addr||p.addr||''}">
+      </div>
+      <div class="form-group">
+        <label>🚪 屋主現居地址</label>
+        <input id="f-owner-addr" type="text" placeholder="例：信義區松仁路100號3樓（屋主住的地方）" value="${c?.ownerAddr||p.ownerAddr||''}">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>💰 房屋售價</label>
+          <input id="f-price" type="text" placeholder="例：1280萬、每坪65萬" value="${c?.price||p.price||''}">
+        </div>
+        <div class="form-group">
+          <label>🏗️ 物件格局</label>
+          <input id="f-layout" type="text" placeholder="例：3房2廳2衛" value="${c?.layout||p.layout||''}">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>社區/大樓名稱</label>
+          <input id="f-building" type="text" placeholder="例：和平大廈" value="${c?.building||p.building||''}">
+        </div>
+        <div class="form-group">
+          <label>物件類型</label>
+          <select id="f-type">
+            ${['大樓','公寓','透天/公寓','透天','店面','其他'].map(t => `<option ${(c?.type||p.type)===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>辨識特徵</label>
+        <input id="f-feature" type="text" placeholder="例：頂樓加蓋、鐵窗、盆栽很多" value="${c?.feature||p.feature||''}">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h4>👤 屋主資訊</h4>
+      <div class="form-row">
+        <div class="form-group">
+          <label>屋主稱呼 *</label>
+          <input id="f-owner" type="text" placeholder="例：陳大哥" value="${c?.owner||p.owner||''}">
+        </div>
+        <div class="form-group">
+          <label>聯絡方式</label>
+          <input id="f-contact" type="tel" placeholder="0912-345-678" value="${c?.contact||p.contact||''}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>屋主類型</label>
+        <select id="f-ownerType">
+          <option value="">請選擇</option>
+          <option value="urgent" ${c?.ownerType==='urgent'?'selected':''}>急售型</option>
+          <option value="observing" ${c?.ownerType==='observing'?'selected':''}>觀望型</option>
+          <option value="defensive" ${c?.ownerType==='defensive'?'selected':''}>防備型</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h4>🎯 拜訪計畫</h4>
+      <div class="form-row">
+        <div class="form-group">
+          <label>拜訪日期</label>
+          <input id="f-date" type="date" value="${c?.visitDate||''}">
+        </div>
+        <div class="form-group">
+          <label>優先順序</label>
+          <div class="priority-btns">
+            <button class="pbtn ${c?.priority==='high'?'active-high':''}" id="pb-high" onclick="setPriority('high')">🔴 高</button>
+            <button class="pbtn ${c?.priority==='mid'?'active-mid':''}" id="pb-mid" onclick="setPriority('mid')">🟡 中</button>
+            <button class="pbtn ${(!c?.priority||c?.priority==='low')?'active-low':''}" id="pb-low" onclick="setPriority('low')">⚪ 低</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>本次最小成功目標 *</label>
+        <select id="f-minGoal">
+          <option value="">請選擇</option>
+          ${['講上話','留聯絡','約時間','試探賣意願','請託委託'].map(g => `<option ${c?.minGoal===g?'selected':''}>${g}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>狀態</label>
+        <select id="f-status">
+          <option value="unvisited" ${c?.status==='unvisited'?'selected':''}>未拜訪</option>
+          <option value="visited" ${c?.status==='visited'?'selected':''}>已拜訪</option>
+          <option value="followup" ${c?.status==='followup'?'selected':''}>待追蹤</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h4>💡 委託策略</h4>
+      <div class="form-group">
+        <label>可能委託理由/賣點</label>
+        <textarea id="f-reasons" placeholder="例：持有20年，子女在外縣市，可能有資金需求">${c?.reasons||''}</textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h4>🗣️ 開場話術</h4>
+      <div class="form-group">
+        <label>第一開場句 *</label>
+        <textarea id="f-script1" placeholder="見到屋主第一句說什麼">${c?.script1||''}</textarea>
+      </div>
+      <div class="form-group">
+        <label>第二追問句</label>
+        <textarea id="f-script2" placeholder="對方沒有拒絕時，接著問什麼">${c?.script2||''}</textarea>
+      </div>
+    </div>
+  `;
+
+  window._editPriority = c?.priority || 'low';
+  document.getElementById('modal-bg').classList.add('show');
+}
+
+function setPriority(p) {
+  window._editPriority = p;
+  ['high','mid','low'].forEach(x => {
+    const b = document.getElementById(`pb-${x}`);
+    if(b) b.className = `pbtn ${p===x ? `active-${x}` : ''}`;
+  });
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('show');
+}
+
+function saveCard() {
+  const addr = document.getElementById('f-addr').value.trim();
+  const owner = document.getElementById('f-owner').value.trim();
+  if (!addr) { showToast('⚠️ 請填寫地址'); return; }
+  if (!owner) { showToast('⚠️ 請填寫屋主稱呼'); return; }
+
+  const now = new Date().toISOString();
+  const c = cards.find(x => x.id === currentCardId);
+
+  const data = {
+    addr, owner,
+    ownerAddr: document.getElementById('f-owner-addr').value.trim(),
+    price: document.getElementById('f-price').value.trim(),
+    layout: document.getElementById('f-layout').value.trim(),
+    building: document.getElementById('f-building').value.trim(),
+    feature: document.getElementById('f-feature').value.trim(),
+    contact: document.getElementById('f-contact').value.trim(),
+    type: document.getElementById('f-type').value,
+    ownerType: document.getElementById('f-ownerType').value,
+    visitDate: document.getElementById('f-date').value,
+    priority: window._editPriority || 'low',
+    minGoal: document.getElementById('f-minGoal').value,
+    status: document.getElementById('f-status').value,
+    reasons: document.getElementById('f-reasons').value.trim(),
+    script1: document.getElementById('f-script1').value.trim(),
+    script2: document.getElementById('f-script2').value.trim(),
+    updatedAt: now,
+  };
+
+  if (c) {
+    Object.assign(c, data);
+  } else {
+    cards.unshift({ id: genId(), visitResult:'', note:'', followup:'', createdAt: now, ...data });
+  }
+
+  saveData();
+  closeModal();
+  renderList();
+  showToast(c ? '✅ 已更新' : '✅ 新增成功');
+}
+
+function deleteCard(id) {
+  cards = cards.filter(c => c.id !== id);
+  saveData();
+  renderList();
+  showToast('🗑️ 已刪除');
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ===== 選單 / 匯出匯入 =====
+function toggleMenu(){
+  const m=document.getElementById('main-menu');
+  m.style.display=m.style.display==='block'?'none':'block';
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#btn-menu')&&!e.target.closest('#main-menu')){
+    const m=document.getElementById('main-menu');if(m)m.style.display='none';
+  }
+});
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(cards,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='battle_cards_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  showToast('📤 已匯出 '+cards.length+' 筆資料');
+  document.getElementById('main-menu').style.display='none';
+}
+function importJSON(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const imported=JSON.parse(ev.target.result);
+      if(!Array.isArray(imported))throw new Error('格式不正確');
+      const ids=new Set(cards.map(c=>c.id));
+      const newCards=imported.filter(c=>!ids.has(c.id));
+      cards=[...cards,...newCards];
+      saveData();renderList();
+      showToast('📥 已匯入 '+newCards.length+' 筆新資料');
+    }catch(err){showToast('❌ 匯入失敗：'+err.message);}
+    e.target.value='';
+  };
+  reader.readAsText(file);
+  document.getElementById('main-menu').style.display='none';
+}
+function markTodayAll(){
+  const today=new Date().toISOString().split('T')[0];
+  cards.forEach(c=>c.visitDate=today);
+  saveData();renderList();showToast('📅 已設定全部為今日');
+  document.getElementById('main-menu').style.display='none';
+}
+function clearAll(){
+  if(!cards.length){showToast('沒有資料可清除');return;}
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  el.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:300px;width:100%;text-align:center"><div style="font-size:15px;font-weight:600;margin-bottom:20px;line-height:1.5">確定要清除所有 '+cards.length+' 筆戰卡嗎？</div><div style="display:flex;gap:10px"><button id="cf-n" style="flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-size:14px;cursor:pointer">取消</button><button id="cf-y" style="flex:1;padding:12px;border-radius:10px;border:none;background:var(--red);color:#fff;font-size:14px;font-weight:600;cursor:pointer">確定</button></div></div>';
+  document.body.appendChild(el);
+  el.querySelector('#cf-n').onclick=()=>el.remove();
+  el.querySelector('#cf-y').onclick=()=>{el.remove();cards=[];saveData();renderList();showToast('🗑️ 已清除所有資料');};
+  document.getElementById('main-menu').style.display='none';
+}
+
+// ===== INIT =====
+loadData();
+renderList();
+</script>
+</body>
+</html>
